@@ -4,10 +4,6 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
-#include <avr/eeprom.h> 
-#include <avr/pgmspace.h>
-#include <avr/sleep.h>
-
 
 #include "lcd.h"
 #include "uart.h"
@@ -22,11 +18,10 @@ volatile float nCurrThruResistorRMS; // RMS current through Resistor
 volatile float nCurrentThruWire;     // Actual RMS current in Wire
 volatile float energy,total_energy;
 volatile unsigned int sec = 0;
-volatile int Power,energy_eeprom;
+volatile int Power;
 volatile int temp = 0;
 volatile int i = 0;
 volatile char buffer[10];
-volatile unsigned char* address=0;
 
 void adc_init()
 {
@@ -188,13 +183,7 @@ int main()
 	//initialize Serial communication
 	uart_init( UART_BAUD_SELECT(UART_BAUD_RATE,F_CPU) );
 	sei();
-	eeprom_busy_wait();
-     
-	 if(eeprom_is_ready())
-		{
-		energy_eeprom = eeprom_read_byte(address);
-	 	eeprom_busy_wait();
-		}        
+             
     // initialize adc and lcd
     adc_init();
     lcd_init(LCD_DISP_ON_CURSOR);
@@ -203,14 +192,7 @@ int main()
     lcd_clrscr();
 	lcd_gotoxy(0,0);
 	
-		itoa(energy_eeprom,buffer,10);
-      lcd.setCursor(0,0);
-      lcd_puts("Stored E:");
-      lcd_puts(buffer);
-      lcd_putst("WH");
-      lcd_gotoxy(0,1);
-      lcd_puts("Please not it");
-      _delay_ms(10000);
+    
 
     _delay_ms(50);
 
@@ -242,15 +224,8 @@ int main()
    
    nCurrentThruWire = nCurrThruResistorRMS * 1000;
 	Power = nCurrThruResistorRMS  *  voltage;
-   energy = (Power*10.051)/(3600);
-    total_energy = energy + total_energy ;
-	energy_eeprom = total_energy;
-	
-	if(eeprom_is_ready())
-		{
-	 	eeprom_busy_wait();
-		eeprom_update_byte(address, energy_eeprom);
-		}     
+   energy = (Power*9.051)/(3600);
+    total_energy = energy + total_energy;
 	
 	lcd_display();
 	send_message_user();
